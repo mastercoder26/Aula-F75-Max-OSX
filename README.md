@@ -17,6 +17,9 @@ This project is not affiliated with Aula, Epomaker, or the official Windows driv
 - Game Mode toggle
 - Launch at Login
 
+<img width="351" height="348" alt="Screenshot 2026-05-07 at 1 24 28 pm" src="https://github.com/user-attachments/assets/84729a99-90f4-4394-9c5a-6cf29f37ca9f" />
+
+
 ## Requirements
 
 - macOS 14 or newer
