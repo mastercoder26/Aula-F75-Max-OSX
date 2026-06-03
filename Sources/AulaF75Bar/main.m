@@ -21,6 +21,7 @@ static NSString * const kRGBColorfulDefaultsKey = @"RGBColorful";
 static NSString * const kKeyResponseLevelDefaultsKey = @"KeyResponseLevel";
 static NSString * const kSleepTimeDefaultsKey = @"SleepTime";
 static NSString * const kGameModeEnabledDefaultsKey = @"GameModeEnabled";
+static NSString * const kBatteryHistoryDefaultsKey = @"BatteryHistory";
 static BOOL gRawHIDPermissionDenied = NO;
 
 typedef NS_ENUM(NSInteger, ScreenFitMode) {
@@ -2332,7 +2333,7 @@ static NSString *ScreenImageDetails(NSURL *url) {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     (void)notification;
-    NSArray *savedHistory = [[NSUserDefaults standardUserDefaults] arrayForKey:@"BatteryHistory"];
+    NSArray *savedHistory = [[NSUserDefaults standardUserDefaults] arrayForKey:kBatteryHistoryDefaultsKey];
     if (savedHistory) {
         self.batteryHistory = [savedHistory mutableCopy];
     } else {
@@ -2366,9 +2367,13 @@ static NSString *ScreenImageDetails(NSURL *url) {
     }
 
     self.lastBatteryPercent = battery.percent;
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    formatter.dateStyle = NSDateFormatterShortStyle;
-    formatter.timeStyle = NSDateFormatterShortStyle;
+    static NSDateFormatter *formatter = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        formatter = [[NSDateFormatter alloc] init];
+        formatter.dateStyle = NSDateFormatterShortStyle;
+        formatter.timeStyle = NSDateFormatterShortStyle;
+    });
     NSString *dateString = [formatter stringFromDate:[NSDate date]];
     
     NSString *sourceStr = battery.source ? [NSString stringWithFormat:@", %@", battery.source] : @"";
@@ -2379,7 +2384,7 @@ static NSString *ScreenImageDetails(NSURL *url) {
         [self.batteryHistory removeLastObject];
     }
     
-    [[NSUserDefaults standardUserDefaults] setObject:self.batteryHistory forKey:@"BatteryHistory"];
+    [[NSUserDefaults standardUserDefaults] setObject:[self.batteryHistory copy] forKey:kBatteryHistoryDefaultsKey];
 
     if (battery.percent > 25) {
         self.lowBatteryNotified = NO;
@@ -2446,7 +2451,15 @@ static NSString *ScreenImageDetails(NSURL *url) {
         textView.drawsBackground = NO;
         textView.textContainerInset = NSMakeSize(10, 10);
         textView.font = [NSFont menuBarFontOfSize:0];
+        
+        textView.verticallyResizable = YES;
+        textView.horizontallyResizable = NO;
+        textView.autoresizingMask = NSViewWidthSizable;
+        textView.textContainer.containerSize = NSMakeSize(260, CGFLOAT_MAX);
+        textView.textContainer.widthTracksTextView = YES;
+        
         textView.string = [self.batteryHistory componentsJoinedByString:@"\n\n"];
+        [textView sizeToFit];
         
         scrollView.documentView = textView;
         scrollableItem.view = scrollView;
