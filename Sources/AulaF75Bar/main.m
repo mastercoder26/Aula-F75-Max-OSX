@@ -2432,9 +2432,26 @@ static NSString *ScreenImageDetails(NSURL *url) {
     if ([self.batteryHistory count] > 0) {
         NSMenuItem *historyItem = [[NSMenuItem alloc] initWithTitle:@"Battery History" action:nil keyEquivalent:@""];
         NSMenu *historyMenu = [[NSMenu alloc] initWithTitle:@"Battery History"];
-        for (NSString *entry in self.batteryHistory) {
-            [historyMenu addItem:DisabledMenuItem(entry)];
-        }
+        
+        NSMenuItem *scrollableItem = [[NSMenuItem alloc] init];
+        NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 260, 250)];
+        scrollView.hasVerticalScroller = YES;
+        scrollView.hasHorizontalScroller = NO;
+        scrollView.autohidesScrollers = YES;
+        scrollView.drawsBackground = NO;
+        
+        NSTextView *textView = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 260, 250)];
+        textView.editable = NO;
+        textView.selectable = NO;
+        textView.drawsBackground = NO;
+        textView.textContainerInset = NSMakeSize(10, 10);
+        textView.font = [NSFont menuBarFontOfSize:0];
+        textView.string = [self.batteryHistory componentsJoinedByString:@"\n\n"];
+        
+        scrollView.documentView = textView;
+        scrollableItem.view = scrollView;
+        
+        [historyMenu addItem:scrollableItem];
         historyItem.submenu = historyMenu;
         [menu addItem:historyItem];
     }
