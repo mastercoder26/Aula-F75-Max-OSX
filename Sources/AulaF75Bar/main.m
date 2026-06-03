@@ -2332,7 +2332,12 @@ static NSString *ScreenImageDetails(NSURL *url) {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     (void)notification;
-    self.batteryHistory = [NSMutableArray array];
+    NSArray *savedHistory = [[NSUserDefaults standardUserDefaults] arrayForKey:@"BatteryHistory"];
+    if (savedHistory) {
+        self.batteryHistory = [savedHistory mutableCopy];
+    } else {
+        self.batteryHistory = [NSMutableArray array];
+    }
     self.lastBatteryPercent = -1;
     [self loadRGBSettings];
     [self loadKeyResponseSettings];
@@ -2361,11 +2366,20 @@ static NSString *ScreenImageDetails(NSURL *url) {
     }
 
     self.lastBatteryPercent = battery.percent;
-    NSString *entry = [NSString stringWithFormat:@"%@  %ld%%  %@", ShortTimeString([NSDate date]), (long)battery.percent, connection ?: @"connected"];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateStyle = NSDateFormatterShortStyle;
+    formatter.timeStyle = NSDateFormatterShortStyle;
+    NSString *dateString = [formatter stringFromDate:[NSDate date]];
+    
+    NSString *sourceStr = battery.source ? [NSString stringWithFormat:@", %@", battery.source] : @"";
+    NSString *entry = [NSString stringWithFormat:@"%@  %ld%%  (%@%@)", dateString, (long)battery.percent, connection ?: @"connected", sourceStr];
     [self.batteryHistory insertObject:entry atIndex:0];
-    while ([self.batteryHistory count] > 8) {
+    
+    while ([self.batteryHistory count] > 100) {
         [self.batteryHistory removeLastObject];
     }
+    
+    [[NSUserDefaults standardUserDefaults] setObject:self.batteryHistory forKey:@"BatteryHistory"];
 
     if (battery.percent > 25) {
         self.lowBatteryNotified = NO;
